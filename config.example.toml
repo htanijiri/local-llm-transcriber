@@ -1,0 +1,35 @@
+# 設定のサンプル。`cp config.example.toml config.toml` してから自分の環境に合わせて編集する。
+# config.toml は .gitignore 対象（パスや用語集に機微情報を含むため）。
+
+[paths]
+# 監視・出力フォルダ。Googleドライブ運用時はマウントパスに差し替える。
+# 例: "/Users/<you>/Library/CloudStorage/GoogleDrive-<you>@gmail.com/マイドライブ/文字起こし/音声入力"
+watch_dir      = "data/inbox"
+transcript_dir = "data/transcripts"
+summary_dir    = "data/summaries"
+
+[transcribe]
+# 精度重視: mlx-community/whisper-large-v3-mlx / 速度重視: mlx-community/whisper-large-v3-turbo
+model    = "mlx-community/whisper-large-v3-mlx"
+language = "ja"
+condition_on_previous_text = false   # 幻聴ループ抑制
+initial_prompt = ""                  # 通常は空（用語ヒントは [glossary] 側を使う）
+trim_leading_silence = true          # 先頭無音トリム（無音区間でのWhisper幻聴を防ぐ）
+silence_threshold_db = -40
+
+[summarize]
+model      = "qwen2.5:14b"
+host       = "http://localhost:11434"
+num_ctx         = 16384   # 文字起こし全体を読ませるため既定(2048)から拡張
+chunk_chars     = 8000    # これを超えると map-reduce
+chunk_overlap   = 400
+temperature     = 0.3
+
+[watch]
+stable_seconds  = 5
+extensions      = [".m4a", ".mp3", ".wav", ".aiff", ".mp4", ".mov"]
+
+[glossary]
+# 正しい表記の用語（人名・固有名詞・専門用語・薬名など）。要約での誤変換補正の基準（②A）。
+# 機微情報を含むので実値は config.toml に書く（ここはサンプルなので空）。
+terms = []

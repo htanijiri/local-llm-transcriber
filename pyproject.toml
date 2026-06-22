@@ -1,0 +1,21 @@
+[project]
+name = "local-llm-transcriber"
+version = "0.1.0"
+description = "Mac mini M4 上で完全ローカルに動く 音声文字起こし＋要約パイプライン"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "mlx-whisper>=0.4.3",
+    "ollama>=0.6.2",
+    "typer>=0.25.1",
+]
+
+[project.scripts]
+lt = "transcriber.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["transcriber"]

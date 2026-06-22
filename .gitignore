@@ -1,0 +1,29 @@
+# macOS
+.DS_Store
+
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# ローカル設定（パス・用語集など機微情報を含む）。共有用は config.example.toml を使う。
+config.toml
+
+# 構築用・記録用ドキュメント（システム本体ではない。個人情報も含むためGit管理しない）
+PROJECT_BRIEF.md
+REQUIREMENTS.md
+SETUP_LOG.md
+BUILD_RECORD.md
+
+# 入出力データ（実音声・文字起こし・議事録）。実データはコミットしない。
+data/inbox/*
+data/transcripts/*
+data/summaries/*
+!data/**/.gitkeep
+samples/
