@@ -20,6 +20,14 @@ PROJECT_BRIEF.md
 REQUIREMENTS.md
 SETUP_LOG.md
 BUILD_RECORD.md
+TODO.md
+
+# 発表資料（社内向け・同僚名や会議内容を含むため公開リポジトリには載せない）
+slides/
+
+# Zenn記事・本の下書き（Zenn側で管理・公開するため、コードリポジトリには載せない）
+articles/
+books/
 
 # 入出力データ（実音声・文字起こし・議事録）。実データはコミットしない。
 data/inbox/*
@@ -27,3 +35,6 @@ data/transcripts/*
 data/summaries/*
 !data/**/.gitkeep
 samples/
+
+# launchd の watch ログ
+logs/

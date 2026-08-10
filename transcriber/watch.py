@@ -6,7 +6,8 @@ Googleドライブのマウントフォルダを対象にするため、FSEvents
 要点:
 - ファイル安定検知: サイズが stable_seconds 秒変化しなくなってから処理（同期途中/書き込み途中を掴まない）。
 - 冪等性: 既に議事録(summary_dir/<stem>.md)があるファイルは再処理しない。
-- 1ファイルの失敗でループを止めない。
+- 1ファイルの失敗でループを止めない。失敗したファイルは即あきらめず、クールダウンを置いて
+  上限回数まで再試行する（Driveのダウンロード遅延など一時的な失敗を拾い直すため）。
 """
 
 from __future__ import annotations
@@ -18,6 +19,10 @@ from pathlib import Path
 from .config import Config
 from .summarize import summarize_file
 from .transcribe import transcribe_file
+
+# 失敗時の再試行ポリシー
+_MAX_ATTEMPTS = 10       # これを超えたら諦めて処理済み扱い
+_RETRY_COOLDOWN = 60.0   # 失敗後、次に試すまでの最短秒数
 
 
 def _audio_files(watch_dir: Path, exts: set[str]) -> Iterator[Path]:
@@ -58,6 +63,8 @@ def watch_loop(
     processed: set[str] = set()
     # name -> (size, この size を最初に観測した monotonic 時刻)
     pending: dict[str, tuple[int, float]] = {}
+    # name -> (失敗回数, 最後に失敗した monotonic 時刻)
+    failures: dict[str, tuple[int, float]] = {}
 
     if not process_existing:
         # 起動時点で既にあるファイルは「新規でない」として無視
@@ -89,12 +96,26 @@ def watch_loop(
             if now - prev[1] < stable_seconds:
                 continue  # まだ安定していない
 
-            # 安定 → 処理（成否に関わらず再処理対象から外す）
-            processed.add(p.name)
-            pending.pop(p.name, None)
+            # 直近に失敗した場合はクールダウン中はスキップ
+            fail = failures.get(p.name)
+            if fail is not None and (now - fail[1]) < _RETRY_COOLDOWN:
+                continue
+
+            # 安定 → 処理。成功したら処理済み、失敗したら再試行対象として残す。
             try:
                 process_one(p, cfg, log)
             except Exception as e:  # noqa: BLE001 - 1件の失敗でループを止めない
-                log(f"[watch] エラー ({p.name}): {e}")
+                attempts = (fail[0] if fail else 0) + 1
+                failures[p.name] = (attempts, time.monotonic())
+                if attempts >= _MAX_ATTEMPTS:
+                    processed.add(p.name)  # これ以上は諦める
+                    pending.pop(p.name, None)
+                    log(f"[watch] 諦め ({p.name}): {attempts}回失敗。{e}")
+                else:
+                    log(f"[watch] エラー ({p.name}) 試行{attempts}/{_MAX_ATTEMPTS}、後で再試行: {e}")
+            else:
+                processed.add(p.name)
+                pending.pop(p.name, None)
+                failures.pop(p.name, None)
 
         time.sleep(poll_interval)
