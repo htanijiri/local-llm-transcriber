@@ -38,3 +38,6 @@ samples/
 
 # launchd の watch ログ
 logs/
+
+# 作業ジャーナル（指示原文・作業記録。社内情報や人名が混ざる可能性があるためGit管理しない）
+journal/
