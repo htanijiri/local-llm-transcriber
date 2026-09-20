@@ -41,3 +41,7 @@ logs/
 
 # 作業ジャーナル（指示原文・作業記録。社内情報や人名が混ざる可能性があるためGit管理しない）
 journal/
+
+# Web のローカル設定（OAuth クライアントID・APIキー）とデプロイ用の出力
+web/config.js
+web/dist/
