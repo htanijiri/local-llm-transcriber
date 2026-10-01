@@ -1,13 +1,14 @@
 """CLIエントリ。各フェーズを独立サブコマンドとして手動実行できる。
 
   uv run lt transcribe <音声ファイル>
-  uv run lt summarize  <文字起こしテキスト>
+  uv run lt summarize  <文字起こしテキスト> [--model <Ollamaモデル名>]
   uv run lt run        <音声ファイル>   # ②→③を通しで実行
   uv run lt watch                       # 監視フォルダを見張って自動処理（①②③）
 """
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import typer
@@ -29,14 +30,30 @@ def transcribe(audio: Path = typer.Argument(..., help="音声ファイルのパ�
 
 
 @app.command()
-def summarize(transcript: Path = typer.Argument(..., help="文字起こしテキストのパス")) -> None:
+def summarize(
+    transcript: Path = typer.Argument(..., help="文字起こしテキストのパス"),
+    model: str | None = typer.Option(
+        None,
+        "--model",
+        "-m",
+        help="要約モデルを一時的に差し替える（モデル比較用）。出力名にモデル名が付き、既存の議事録を上書きしない",
+    ),
+) -> None:
     """フェーズ③: テキスト → 議事録Markdown。"""
+    import time
+
     from .summarize import summarize_file
 
     cfg = load_config()
+    suffix = ""
+    if model:
+        cfg.summarize.model = model
+        # 比較用: 既定モデルの議事録を上書きしないよう、出力名にモデル名を付ける
+        suffix = "." + re.sub(r"[^0-9A-Za-z._-]+", "_", model)
     typer.echo(f"[summarize] {transcript} を要約中 (model={cfg.summarize.model}) ...")
-    out = summarize_file(transcript, cfg)
-    typer.echo(f"[summarize] 完了 → {out}")
+    t0 = time.monotonic()
+    out = summarize_file(transcript, cfg, suffix=suffix)
+    typer.echo(f"[summarize] 完了 → {out}（{time.monotonic() - t0:.1f}秒）")
 
 
 @app.command()

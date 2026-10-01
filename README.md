@@ -24,6 +24,13 @@ uv run lt transcribe path/to/meeting.m4a           # → data/transcripts/meetin
 uv run lt summarize  data/transcripts/meeting.txt  # → data/summaries/meeting.md
 ```
 
+要約モデルを比較したいときは `--model` で一時的に差し替える（config.toml は変えない）。
+出力名にモデル名が付くので、既定モデルの議事録は上書きされない。
+```bash
+uv run lt summarize data/transcripts/meeting.txt --model hf.co/llm-jp/llm-jp-4.1-8b-thinking-gguf:Q4_K_M
+# → data/summaries/meeting.hf.co_llm-jp_llm-jp-4.1-8b-thinking-gguf_Q4_K_M.md
+```
+
 出力先・モデル・チャンクサイズ等は [config.toml](config.toml) に集約。
 
 ## Googleドライブ連携

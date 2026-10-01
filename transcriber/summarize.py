@@ -64,8 +64,11 @@ def summarize_text(text: str, cfg: Config) -> str:
     return _gen(reduce_prompt)
 
 
-def summarize_file(transcript_path: Path, cfg: Config) -> Path:
-    """文字起こしテキストファイルを要約し、Markdownを summary_dir に保存してパスを返す。"""
+def summarize_file(transcript_path: Path, cfg: Config, suffix: str = "") -> Path:
+    """文字起こしテキストファイルを要約し、Markdownを summary_dir に保存してパスを返す。
+
+    suffix: 出力名に付ける識別子（モデル比較時に既存の議事録を上書きしないため）。
+    """
     transcript_path = Path(transcript_path).expanduser().resolve()
     if not transcript_path.exists():
         raise FileNotFoundError(f"テキストが見つかりません: {transcript_path}")
@@ -74,6 +77,6 @@ def summarize_file(transcript_path: Path, cfg: Config) -> Path:
     markdown = summarize_text(text, cfg)
 
     cfg.summary_dir.mkdir(parents=True, exist_ok=True)
-    out_path = cfg.summary_dir / f"{transcript_path.stem}.md"
+    out_path = cfg.summary_dir / f"{transcript_path.stem}{suffix}.md"
     out_path.write_text(markdown, encoding="utf-8")
     return out_path
