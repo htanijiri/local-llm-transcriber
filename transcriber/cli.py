@@ -1,9 +1,9 @@
 """CLIエントリ。各フェーズを独立サブコマンドとして手動実行できる。
 
-  uv run lt transcribe <音声ファイル>
-  uv run lt summarize  <文字起こしテキスト>
-  uv run lt run        <音声ファイル>   # ②→③を通しで実行
-  uv run lt watch                       # 監視フォルダを見張って自動処理（①②③）
+uv run lt transcribe <音声ファイル>
+uv run lt summarize  <文字起こしテキスト>
+uv run lt run        <音声ファイル>   # ②→③を通しで実行
+uv run lt watch                       # 監視フォルダを見張って自動処理（①②③）
 """
 
 from __future__ import annotations
@@ -57,9 +57,7 @@ def run(audio: Path = typer.Argument(..., help="音声ファイルのパス")) -
 @app.command()
 def watch(
     poll: float = typer.Option(2.0, help="ポーリング間隔（秒）"),
-    process_existing: bool = typer.Option(
-        True, help="起動時に既にある未処理ファイルも対象にする"
-    ),
+    process_existing: bool = typer.Option(True, help="起動時に既にある未処理ファイルも対象にする"),
 ) -> None:
     """フェーズ①: 監視フォルダを見張り、新規音声を自動で 文字起こし→要約。Ctrl-C で停止。"""
     from .watch import watch_loop

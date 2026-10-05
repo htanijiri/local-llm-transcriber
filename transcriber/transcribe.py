@@ -54,9 +54,21 @@ def _preprocess_audio(audio_path: Path, cfg: Config) -> tuple[Path, bool]:
     filt = f"silenceremove=start_periods=1:start_duration=0.5:start_threshold={thr}dB"
     try:
         subprocess.run(
-            ["ffmpeg", "-y", "-i", str(audio_path),
-             "-ar", "16000", "-ac", "1", "-af", filt, str(tmp)],
-            check=True, capture_output=True,
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                str(audio_path),
+                "-ar",
+                "16000",
+                "-ac",
+                "1",
+                "-af",
+                filt,
+                str(tmp),
+            ],
+            check=True,
+            capture_output=True,
         )
     except Exception:
         return audio_path, False

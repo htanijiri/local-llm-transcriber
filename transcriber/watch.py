@@ -21,8 +21,8 @@ from .summarize import summarize_file
 from .transcribe import transcribe_file
 
 # 失敗時の再試行ポリシー
-_MAX_ATTEMPTS = 10       # これを超えたら諦めて処理済み扱い
-_RETRY_COOLDOWN = 60.0   # 失敗後、次に試すまでの最短秒数
+_MAX_ATTEMPTS = 10  # これを超えたら諦めて処理済み扱い
+_RETRY_COOLDOWN = 60.0  # 失敗後、次に試すまでの最短秒数
 
 
 def _audio_files(watch_dir: Path, exts: set[str]) -> Iterator[Path]:
@@ -112,7 +112,9 @@ def watch_loop(
                     pending.pop(p.name, None)
                     log(f"[watch] 諦め ({p.name}): {attempts}回失敗。{e}")
                 else:
-                    log(f"[watch] エラー ({p.name}) 試行{attempts}/{_MAX_ATTEMPTS}、後で再試行: {e}")
+                    log(
+                        f"[watch] エラー ({p.name}) 試行{attempts}/{_MAX_ATTEMPTS}、後で再試行: {e}"
+                    )
             else:
                 processed.add(p.name)
                 pending.pop(p.name, None)

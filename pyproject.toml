@@ -19,3 +19,27 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["transcriber"]
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.6",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Claude Code のワークツリー（リポジトリの複製）を対象にしない
+extend-exclude = [".claude"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "BLE"]
+# 日本語のコメント・docstring は全角を幅2で数えるため超えやすい。コードの行長は formatter に任せる。
+ignore = ["E501"]
+
+[tool.ruff.lint.flake8-bugbear]
+# typer の引数定義（関数の既定値で呼ぶのが正規の書き方）
+extend-immutable-calls = ["typer.Argument", "typer.Option"]
