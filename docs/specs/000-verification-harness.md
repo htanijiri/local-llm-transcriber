@@ -1,6 +1,6 @@
 # 000 検証の土台（テスト・lint・スモークテスト）
 
-- 状態：ドラフト
+- 状態：完了
 - 依存：—
 
 ## 背景・課題
@@ -21,13 +21,13 @@
 - 型チェッカー（pyright/mypy）の導入。必要になったら追加する。
 
 ## 受け入れ条件
-- [ ] AC1：`uv run pytest` が、mlx-whisper と Ollama を起動・ロードせずに完走する（ネットワーク・モデル不要）。
-- [ ] AC2：テスト全体が 10 秒以内に終わる。
-- [ ] AC3：少なくとも次をテストでカバーする：設定の読み込みと相対パス解決／要約の単一パスと map-reduce の切り替え／watch の「処理済み判定・安定検知・失敗時の再試行」。
-- [ ] AC4：`uv run ruff check` と `uv run ruff format --check` がエラーなく通る。
-- [ ] AC5：`scripts/smoke.sh` が、macOS の `say` で生成した短い日本語音声を実モデルで文字起こし→要約し、出力ファイルができれば成功（exit 0）とする。実データ（`samples/` 等）に依存しない。
-- [ ] AC6：Claude が `.py` を編集すると、hook で `ruff format` と `ruff check --fix` が自動で走る。
-- [ ] AC7：Claude がそのターンで `.py` を変更していて `pytest` が失敗している場合、Stop hook が終了を差し戻す（1回まで）。
+- [x] AC1：`uv run pytest` が、mlx-whisper と Ollama を起動・ロードせずに完走する（ネットワーク・モデル不要）。
+- [x] AC2：テスト全体が 10 秒以内に終わる。
+- [x] AC3：少なくとも次をテストでカバーする：設定の読み込みと相対パス解決／要約の単一パスと map-reduce の切り替え／watch の「処理済み判定・安定検知・失敗時の再試行」。
+- [x] AC4：`uv run ruff check` と `uv run ruff format --check` がエラーなく通る。
+- [x] AC5：`scripts/smoke.sh` が、macOS の `say` で生成した短い日本語音声を実モデルで文字起こし→要約し、出力ファイルができれば成功（exit 0）とする。実データ（`samples/` 等）に依存しない。
+- [x] AC6：Claude が `.py` を編集すると、hook で `ruff format` と `ruff check --fix` が自動で走る。
+- [x] AC7：Claude がそのターンで `.py` を変更していて `pytest` が失敗している場合、Stop hook が終了を差し戻す（1回まで）。
 
 ## 設計方針
 - 開発用依存は `pyproject.toml` の `[dependency-groups] dev` に `pytest` と `ruff` を追加する。
@@ -42,6 +42,10 @@
   - `PostToolUse`（Edit/Write で `*.py`）：`ruff format` と `ruff check --fix` を実行。
   - `Stop`：そのターンで `.py` に変更があれば `pytest -q` を実行し、失敗なら差し戻す。既存のジャーナル確認 hook とは別スクリプトにする。
 - スモークテストは実モデルを使うため hook では実行しない（数分かかる）。仕様書の検証方法で必要なときに明示的に実行する。
+- スモークテストは、一時ディレクトリに作った設定ファイル（`config.example.toml` の `[paths]` だけを一時ディレクトリに差し替えたもの）を使う。ローカルの `config.toml` と、その出力先（実運用のフォルダ）には触れない。
+  - そのために、設定ファイルのパスを環境変数 `LT_CONFIG` で差し替えられるようにする（`load_config` が参照する。未指定なら今までどおり `config.toml`）。実装中に追加した設計。
+- ruff の行長は 100（既存のコードの大半が収まる幅）。日本語のコメント・docstring は全角を幅2で数えるため超えやすく、フォーマッタも折り返さないので、lint の行長チェック（E501）は無効にする。
+- Stop hook が「そのターンで `.py` を変更したか」を知る方法：PostToolUse hook が `.py` の編集時に、セッションごとの印（一時ディレクトリ上のファイル）を残す。Stop hook は印があるときだけ pytest を実行し、通れば印を消す。差し戻しは1回までで、差し戻し後も失敗していれば印を消して終了を許す。
 
 ## 検討した案と不採用の理由
 | 案 | 採用 | 理由 |
@@ -59,9 +63,9 @@
 - なし（ドラフト段階でユーザー確認待ち）
 
 ## タスク
-- [ ] dev 依存（pytest, ruff）と ruff 設定を追加
-- [ ] `watch_loop` から 1 回分の走査を切り出す
-- [ ] テストを追加（config / summarize / watch / transcribe の前処理判断）
-- [ ] `scripts/smoke.sh` を作成
-- [ ] PostToolUse（ruff）と Stop（pytest）の hook を追加
-- [ ] CLAUDE.md のコマンド欄と「テストはない」の記述を更新
+- [x] dev 依存（pytest, ruff）と ruff 設定を追加
+- [x] `watch_loop` から 1 回分の走査を切り出す
+- [x] テストを追加（config / summarize / watch / transcribe の前処理判断）
+- [x] `scripts/smoke.sh` を作成
+- [x] PostToolUse（ruff）と Stop（pytest）の hook を追加
+- [x] CLAUDE.md のコマンド欄と「テストはない」の記述を更新

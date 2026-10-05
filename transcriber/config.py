@@ -6,6 +6,7 @@ config.toml の [paths] をマウントパスに差し替えるだけでコー�
 
 from __future__ import annotations
 
+import os
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -13,6 +14,7 @@ from pathlib import Path
 # プロジェクトルート（このファイルの2つ上 = transcriber/ の親）
 ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_CONFIG_PATH = ROOT / "config.toml"
+CONFIG_ENV_VAR = "LT_CONFIG"
 PROMPTS_DIR = ROOT / "prompts"
 
 
@@ -41,6 +43,10 @@ class SummarizeCfg:
     chunk_overlap: int
     temperature: float
     num_ctx: int = 16384
+    # 出力トークン上限。小さいと議事録が途中で打ち切られる（その場合は失敗として扱う）。
+    num_predict: int = 4096
+    # 生成が完了しなかったとき、その1回の生成を合計何回まで試すか（1 なら再試行しない）。
+    max_attempts: int = 3
 
 
 @dataclass
@@ -92,7 +98,13 @@ class Config:
 
 
 def load_config(path: Path | None = None) -> Config:
-    cfg_path = path or DEFAULT_CONFIG_PATH
+    """設定を読み込む。優先順は 引数 > 環境変数 LT_CONFIG > プロジェクト直下の config.toml。
+
+    LT_CONFIG は、実運用の config.toml（と、その出力先）に触れずに実行するためのもの
+    （scripts/smoke.sh が使う）。
+    """
+    env_path = os.environ.get(CONFIG_ENV_VAR)
+    cfg_path = path or (Path(env_path).expanduser() if env_path else DEFAULT_CONFIG_PATH)
     with open(cfg_path, "rb") as f:
         data = tomllib.load(f)
 

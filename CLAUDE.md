@@ -26,6 +26,7 @@ Mac mini M4 上で完全ローカルに動く、会議音声の文字起こし�
 ## 消してはいけない設定（実際に失敗して入れたもの）
 一見冗長でも「整理」で削らない。理由は TECH_NOTES の 4章・5章・8章。
 - Ollama: `num_ctx`（既定2048だと長文が切り詰められる）、`num_predict`（議事録が途中で切れる）
+- Ollama: 応答の `done_reason` が `"stop"` であることの確認（`ollama_client.generate`）。生成がサーバー側で打ち切られても HTTP 200 で途中までの本文が返るため、確認を外すと途中で切れた議事録が黙って保存される。中断は再試行（`max_attempts`）、上限到達（`"length"`）は再試行せず失敗にする
 - Whisper: `condition_on_previous_text=false`、`no_speech_threshold`、先頭無音トリム（幻聴対策）
 - 長文は map-reduce より単一パスを優先（`chunk_chars` を超えた場合のみ map-reduce）
 
@@ -36,9 +37,19 @@ uv run lt run <音声ファイル>          # 文字起こし→要約を通し�
 uv run lt transcribe <音声ファイル>
 uv run lt summarize <文字起こし.txt>
 uv run lt watch                       # フォルダ監視
+
+uv run pytest                         # 自動テスト（数秒。実モデル・config.toml を使わない）
+uv run ruff check && uv run ruff format --check
+scripts/smoke.sh                      # 実モデルでの最小の通し確認（数分）
 ```
 - 前提：Ollama が起動済みで `qwen2.5:14b` を pull 済み、ffmpeg がインストール済み。
-- **テストはない**。変更後は `samples/` の音声で該当コマンドを実際に通して確認する（large-v3 は時間がかかるので、必要なら短い音声で）。
+- 設定ファイルは環境変数 `LT_CONFIG` で差し替えられる（未指定なら `config.toml`）。実運用のフォルダに触れずに試すときに使う。
+
+## 検証（仕様書 000）
+- **変更したら `uv run pytest` を通す。** mlx-whisper・Ollama・ffmpeg はダミーに差し替えてあり、設定は `tmp_path` 上に作る（`tests/conftest.py`）。ロジックを足したらテストも足す。
+- 実モデルを通す確認は `scripts/smoke.sh`。`say` で作った音声と一時ディレクトリの設定を使うので、実データと実運用のフォルダには触れない。hook では実行されないので、文字起こし・要約の経路を変えたときに明示的に実行する。
+- 要約の品質（内容の良し悪し）はテストでは測れない。必要なら `samples/` の音声で実際に通して読む。
+- hook（`.claude/hooks/`）：`.py` を Edit/Write すると `ruff format` と `ruff check --fix` が走る（`ruff-post-edit.sh`）。そのターンで `.py` を変更していて pytest が失敗していると、Stop が1回だけ差し戻す（`pytest-stop.sh`）。
 
 ## watch の常駐運用
 - launchd（`~/Library/LaunchAgents/com.tanijiri.local-llm-transcriber.watch.plist`）から `scripts/watch-daemon.sh` 経由で `lt watch` が常駐している。

@@ -70,7 +70,7 @@ def _preprocess_audio(audio_path: Path, cfg: Config) -> tuple[Path, bool]:
             check=True,
             capture_output=True,
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - ffmpeg の失敗理由は問わず、元ファイルで続行する（安全側）
         return audio_path, False
 
     # 全編が閾値以下等でトリム結果が空に近い場合は元ファイルに退避

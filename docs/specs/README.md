@@ -16,9 +16,10 @@
 ## 一覧
 | # | 仕様書 | 状態 | 依存 |
 |---|---|---|---|
-| 000 | [検証の土台（テスト・lint・スモークテスト）](000-verification-harness.md) | ドラフト | — |
+| 000 | [検証の土台（テスト・lint・スモークテスト）](000-verification-harness.md) | 完了 | — |
 | 001 | [2チャンネル音声の話者ラベル付き文字起こし](001-two-channel-transcription.md) | ドラフト | 000 |
 | 002 | [Kanary録音エクスポーター](002-kanary-exporter.md) | ドラフト | 001（入力フォーマット） |
 | 003 | [Web：文字起こし・議事録の閲覧／ダウンロード](003-web-viewer.md) | ドラフト | 000 |
 | 004 | [Web：音声・動画のアップロード](004-web-upload.md) | ドラフト | 003 |
 | 005 | [破壊的な操作のガード](005-destructive-command-guard.md) | ドラフト | — |
+| 006 | [要約の途中切れの検知と再試行](006-summary-truncation-retry.md) | 完了 | 000 |

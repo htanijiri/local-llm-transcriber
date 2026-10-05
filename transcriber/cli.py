@@ -12,7 +12,7 @@ from pathlib import Path
 
 import typer
 
-from .config import load_config
+from .config import Config, load_config
 
 app = typer.Typer(add_completion=False, help="ローカルLLM 文字起こし・要約パイプライン")
 
@@ -28,21 +28,30 @@ def transcribe(audio: Path = typer.Argument(..., help="音声ファイルのパ�
     typer.echo(f"[transcribe] 完了 → {out}")
 
 
+def _summarize_or_exit(transcript: Path, cfg: Config, tag: str) -> Path:
+    """要約する。生成が完了しなかった場合は、理由を表示して終了コード 1 で終わる。"""
+    from .ollama_client import GenerationIncompleteError
+    from .summarize import summarize_file
+
+    try:
+        return summarize_file(transcript, cfg, typer.echo)
+    except GenerationIncompleteError as e:
+        typer.echo(f"[{tag}] 失敗: 議事録は保存していません。{e}", err=True)
+        raise typer.Exit(1) from e
+
+
 @app.command()
 def summarize(transcript: Path = typer.Argument(..., help="文字起こしテキストのパス")) -> None:
     """フェーズ③: テキスト → 議事録Markdown。"""
-    from .summarize import summarize_file
-
     cfg = load_config()
     typer.echo(f"[summarize] {transcript} を要約中 (model={cfg.summarize.model}) ...")
-    out = summarize_file(transcript, cfg)
+    out = _summarize_or_exit(transcript, cfg, "summarize")
     typer.echo(f"[summarize] 完了 → {out}")
 
 
 @app.command()
 def run(audio: Path = typer.Argument(..., help="音声ファイルのパス")) -> None:
     """②→③を通しで実行（音声 → 文字起こし → 議事録）。"""
-    from .summarize import summarize_file
     from .transcribe import transcribe_file
 
     cfg = load_config()
@@ -50,7 +59,7 @@ def run(audio: Path = typer.Argument(..., help="音声ファイルのパス")) -
     transcript = transcribe_file(audio, cfg)
     typer.echo(f"[run] → {transcript}")
     typer.echo("[run] 要約 ...")
-    summary = summarize_file(transcript, cfg)
+    summary = _summarize_or_exit(transcript, cfg, "run")
     typer.echo(f"[run] 完了 → {summary}")
 
 

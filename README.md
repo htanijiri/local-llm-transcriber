@@ -33,10 +33,20 @@ Google Drive for desktop を導入し、対象フォルダを「オフライン�
 
 ## 構成
 ```
-transcriber/   本体（cli / config / transcribe / summarize / ollama_client）
+transcriber/   本体（cli / config / transcribe / summarize / ollama_client / watch）
 prompts/       要約プロンプト（single / map / reduce）
-config.toml    設定の集約
+config.toml    設定の集約（config.example.toml をコピーして作る）
 data/          ローカル検証用の入出力（inbox / transcripts / summaries）
+tests/         自動テスト（実モデルを使わない）
+scripts/       スモークテスト、watch 常駐用のラッパー
+docs/specs/    機能ごとの仕様書
+```
+
+## 開発
+```bash
+uv run pytest                                      # 自動テスト（1秒未満。mlx-whisper・Ollama は不要）
+uv run ruff check && uv run ruff format --check    # lint／フォーマット
+scripts/smoke.sh                                   # 実モデルでの最小の通し確認（約1分。Ollama とモデルが必要）
 ```
 
 ## 今後
